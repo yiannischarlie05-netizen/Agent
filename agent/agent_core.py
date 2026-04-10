@@ -31,10 +31,12 @@ class AgentCore:
 
     def set_workspace(self, path):
         """Set the current workspace directory."""
-        path = os.path.abspath(os.path.expanduser(path))
-        if not os.path.isdir(path):
-            return {"error": f"Directory not found: {path}"}
-        self.workspace = path
+        if not path or not isinstance(path, str):
+            return {"error": "A valid directory path is required"}
+        resolved = os.path.realpath(os.path.abspath(os.path.expanduser(path)))
+        if not os.path.isdir(resolved):
+            return {"error": "Directory not found"}
+        self.workspace = resolved
         return {"success": True, "workspace": self.workspace}
 
     def get_workspace(self):
