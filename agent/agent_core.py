@@ -4,7 +4,6 @@ import os
 import json
 import time
 import uuid
-import traceback
 
 from agent.file_ops import (
     list_directory, read_file, write_file, edit_file,
@@ -85,7 +84,7 @@ class AgentCore:
             self._log_action(action, params, result)
             return result
         except Exception as e:
-            error_result = {"error": str(e), "traceback": traceback.format_exc()}
+            error_result = {"error": str(e)}
             self._log_action(action, params, error_result)
             return error_result
 
@@ -129,12 +128,18 @@ class AgentCore:
         return {"tasks": self.task_history}
 
     def _resolve_path(self, path):
-        """Resolve a path relative to the workspace."""
+        """Resolve a path relative to the workspace, ensuring it stays within the workspace."""
         if not path:
             return self.workspace
         if os.path.isabs(path):
-            return path
-        return os.path.join(self.workspace, path)
+            resolved = os.path.realpath(path)
+        else:
+            resolved = os.path.realpath(os.path.join(self.workspace, path))
+        # Ensure the resolved path is within the workspace
+        workspace_real = os.path.realpath(self.workspace)
+        if not resolved.startswith(workspace_real + os.sep) and resolved != workspace_real:
+            raise ValueError(f"Path '{path}' resolves outside the workspace")
+        return resolved
 
     def _log_action(self, action, params, result):
         """Log an action to the current task."""
