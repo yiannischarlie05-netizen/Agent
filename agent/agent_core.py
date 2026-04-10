@@ -33,6 +33,9 @@ class AgentCore:
         """Set the current workspace directory."""
         if not path or not isinstance(path, str):
             return {"error": "A valid directory path is required"}
+        # Reject paths with null bytes or other dangerous characters
+        if "\0" in path:
+            return {"error": "Invalid path"}
         resolved = os.path.realpath(os.path.abspath(os.path.expanduser(path)))
         if not os.path.isdir(resolved):
             return {"error": "Directory not found"}
@@ -85,8 +88,8 @@ class AgentCore:
             result = handler(params)
             self._log_action(action, params, result)
             return result
-        except Exception as e:
-            error_result = {"error": str(e)}
+        except Exception:
+            error_result = {"error": "An internal error occurred while processing the action"}
             self._log_action(action, params, error_result)
             return error_result
 
@@ -140,7 +143,7 @@ class AgentCore:
         # Ensure the resolved path is within the workspace
         workspace_real = os.path.realpath(self.workspace)
         if not resolved.startswith(workspace_real + os.sep) and resolved != workspace_real:
-            raise ValueError(f"Path '{path}' resolves outside the workspace")
+            raise ValueError("Path resolves outside the workspace")
         return resolved
 
     def _log_action(self, action, params, result):
