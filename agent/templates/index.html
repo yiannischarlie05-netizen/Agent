@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Coding Agent</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header id="header">
+            <div class="header-left">
+                <span class="logo">&#9881;</span>
+                <h1>Local Coding Agent</h1>
+            </div>
+            <div class="header-center">
+                <div class="workspace-selector">
+                    <label for="workspace-input">Workspace:</label>
+                    <input type="text" id="workspace-input" placeholder="/path/to/project">
+                    <button id="btn-set-workspace" title="Set Workspace">Open</button>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="btn-analyze" title="Analyze Project">&#128269; Analyze</button>
+                <button id="btn-git-status" title="Git Status">&#9432; Git</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div id="main-content">
+            <!-- Left Sidebar - File Explorer -->
+            <aside id="sidebar">
+                <div class="sidebar-header">
+                    <h3>Explorer</h3>
+                    <div class="sidebar-actions">
+                        <button id="btn-new-file" title="New File">+</button>
+                        <button id="btn-refresh" title="Refresh">&#8635;</button>
+                    </div>
+                </div>
+                <div id="file-tree" class="file-tree">
+                    <p class="placeholder">Set a workspace to browse files</p>
+                </div>
+            </aside>
+
+            <!-- Center - Main Panels -->
+            <div id="center-panel">
+                <!-- Task Input Area -->
+                <div id="task-panel">
+                    <div class="task-header">
+                        <h3>&#9889; Agent Task</h3>
+                        <div class="task-actions">
+                            <button id="btn-clear-task" title="Clear">Clear</button>
+                        </div>
+                    </div>
+                    <div class="task-input-area">
+                        <textarea id="task-input" placeholder="Describe your coding task... e.g., 'Create a REST API with Flask', 'Fix the bug in user authentication', 'Add unit tests for the utils module'" rows="3"></textarea>
+                        <button id="btn-execute-task" class="btn-primary">&#9654; Execute Task</button>
+                    </div>
+                </div>
+
+                <!-- Tab Bar for Editor/Output -->
+                <div id="tab-bar">
+                    <button class="tab active" data-tab="output">Output</button>
+                    <button class="tab" data-tab="editor">Editor</button>
+                    <button class="tab" data-tab="diff">Diff View</button>
+                    <button class="tab" data-tab="terminal">Terminal</button>
+                </div>
+
+                <!-- Output Panel -->
+                <div id="output-panel" class="tab-content active">
+                    <div id="output-content">
+                        <div class="welcome-message">
+                            <h2>Welcome to Local Coding Agent</h2>
+                            <p>This tool helps you perform coding tasks locally on your projects.</p>
+                            <div class="quick-actions">
+                                <h4>Quick Actions:</h4>
+                                <ul>
+                                    <li><strong>Set Workspace</strong> - Point to your project directory</li>
+                                    <li><strong>Describe a Task</strong> - Tell the agent what to do</li>
+                                    <li><strong>Browse Files</strong> - Explore and edit your codebase</li>
+                                    <li><strong>Run Commands</strong> - Execute shell commands</li>
+                                    <li><strong>Git Operations</strong> - Manage version control</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor Panel -->
+                <div id="editor-panel" class="tab-content">
+                    <div class="editor-header">
+                        <span id="editor-filename">No file open</span>
+                        <div class="editor-actions">
+                            <button id="btn-save-file" disabled>&#128190; Save</button>
+                            <button id="btn-find-issues" disabled>&#128270; Find Issues</button>
+                        </div>
+                    </div>
+                    <div class="editor-container">
+                        <div id="line-numbers"></div>
+                        <textarea id="code-editor" spellcheck="false" placeholder="Open a file to edit..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Diff Panel -->
+                <div id="diff-panel" class="tab-content">
+                    <div id="diff-content">
+                        <p class="placeholder">No diff to display. Make changes to files or run git diff.</p>
+                    </div>
+                </div>
+
+                <!-- Terminal Panel -->
+                <div id="terminal-panel" class="tab-content">
+                    <div id="terminal-output"></div>
+                    <div class="terminal-input-area">
+                        <span class="terminal-prompt">$</span>
+                        <input type="text" id="terminal-input" placeholder="Enter command..." autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Info/Actions -->
+            <aside id="right-sidebar">
+                <div class="info-section">
+                    <h3>Project Info</h3>
+                    <div id="project-info">
+                        <p class="placeholder">Analyze a project to see info</p>
+                    </div>
+                </div>
+                <div class="info-section">
+                    <h3>Task History</h3>
+                    <div id="task-history">
+                        <p class="placeholder">No tasks executed yet</p>
+                    </div>
+                </div>
+                <div class="info-section">
+                    <h3>Quick Commands</h3>
+                    <div class="quick-commands">
+                        <button class="quick-cmd" data-cmd="ls -la">ls -la</button>
+                        <button class="quick-cmd" data-cmd="git status">git status</button>
+                        <button class="quick-cmd" data-cmd="git log --oneline -10">git log</button>
+                        <button class="quick-cmd" data-cmd="find . -name '*.py' | head -20">find .py</button>
+                        <button class="quick-cmd" data-cmd="cat README.md">README</button>
+                        <button class="quick-cmd" data-cmd="python3 -m pytest">pytest</button>
+                        <button class="quick-cmd" data-cmd="npm test">npm test</button>
+                        <button class="quick-cmd" data-cmd="make">make</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Status Bar -->
+        <footer id="status-bar">
+            <span id="status-text">Ready</span>
+            <span id="connection-status">&#9679; Disconnected</span>
+        </footer>
+    </div>
+
+    <!-- Modal for New File -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 id="modal-title">New File</h3>
+            <input type="text" id="modal-input" placeholder="Enter file path...">
+            <textarea id="modal-textarea" class="hidden" placeholder="Enter content..."></textarea>
+            <div class="modal-actions">
+                <button id="btn-modal-cancel">Cancel</button>
+                <button id="btn-modal-confirm" class="btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
