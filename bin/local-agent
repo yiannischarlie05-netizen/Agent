@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""CLI entry point for the Local Coding Agent."""
+
+import argparse
+import os
+import sys
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Local Coding Agent - A Linux-based tool for local coding tasks",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  local-agent                          # Start with home directory
+  local-agent /path/to/project         # Start with specific workspace
+  local-agent --port 9000              # Use custom port
+  local-agent --host 0.0.0.0           # Listen on all interfaces
+  local-agent --debug                  # Enable debug mode
+        """,
+    )
+
+    parser.add_argument(
+        "workspace",
+        nargs="?",
+        default=os.getcwd(),
+        help="Path to the workspace directory (default: current directory)",
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host to bind to (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8888,
+        help="Port to listen on (default: 8888)",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug mode",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="Local Coding Agent v1.0.0",
+    )
+
+    args = parser.parse_args()
+
+    workspace = os.path.abspath(args.workspace)
+    if not os.path.isdir(workspace):
+        print(f"Error: Directory not found: {workspace}", file=sys.stderr)
+        sys.exit(1)
+
+    from agent.app import run_app
+    run_app(workspace=workspace, host=args.host, port=args.port, debug=args.debug)
+
+
+if __name__ == "__main__":
+    main()
