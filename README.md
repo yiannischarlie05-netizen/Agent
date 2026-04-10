@@ -1,0 +1,1 @@
+Create a repo and develop a linux based tool with ui by github copilot extension can do locally github agent tasks like now i primpt to develope this tool by giving agent task and this tool should be able to advance level coding agentic task to develop any kind of tool and fix and patch isdues given codebase locally # Agent
